@@ -1,1 +1,0 @@
-from multiplexed.utils import metadata_generator
