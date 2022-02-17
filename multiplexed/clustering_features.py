@@ -76,7 +76,7 @@ class ClusteringGenerator(BaseEstimator, TransformerMixin):
                     default_radius = 0.6, 
                     default_min_density = 5, 
                     default_min_samples = 400):
-        self.cluster_info = pd.DataFrame(path_to_clustering_info)
+        self.cluster_info = pd.read_csv(path_to_clustering_info)
         self.default_radius = default_radius
         self.default_min_density = default_min_density
         self.default_min_samples = default_min_samples
@@ -121,7 +121,7 @@ class ClusteringFeatures(BaseEstimator, TransformerMixin):
                     default_min_density = 5, 
                     default_min_samples = 400,
                     eps = 1e-16):
-        self.cluster_info = pd.DataFrame(path_to_clustering_info)
+        self.cluster_info = pd.read_csv(path_to_clustering_info)
         self.default_radius = default_radius
         self.default_min_density = default_min_density
         self.default_min_samples = default_min_samples
