@@ -1,2 +1,5 @@
-# multiplexed
-Highly Multiplexed Super-Resolution Imaging
+# Multiplexed
+
+This is the repository for working on Highly Multiplexed Super-Resolution Imaging. It includes pipeline for working on super-resolution florescent synapse data. 
+
+It provides features from the histograms of the synapse picks as well as clustering based features. You can find a juypter notebook in the [docs](./docs/)
