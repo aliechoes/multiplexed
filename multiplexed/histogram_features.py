@@ -43,13 +43,13 @@ class HistogramGenerator(BaseEstimator, TransformerMixin):
                                                             self.diameter])
 
         histograms = dict()
-        for i, ch in  enumerate(localization["channel"].unique()):
-            indx = localization["channel"] == ch 
+        for i, pr in  enumerate(localization["protein"].unique()):
+            indx = localization["protein"] == pr 
             hist, _ = np.histogramdd(  localization.loc[indx,cols].to_numpy(), 
                                             bins = self.bins,
                                             range = ((-1,1),(-1,1),(-1,1)) )
             
-            histograms[ch] = hist
+            histograms[pr] = hist
             hist = None
             
         return [X, histograms]
@@ -68,17 +68,17 @@ class HistogramsStatistics(BaseEstimator, TransformerMixin):
         localization = X[0].copy() 
         histograms = X[1].copy() 
 
-        channels = localization["channel"].unique()
+        proteins = localization["protein"].unique()
         
         features = dict()
-        for ch in channels:
-            features["mean_" + ch] = histograms[ch].ravel().mean()
-            features["std_" + ch] = histograms[ch].ravel().std()
-            features["skewness_" + ch] = skew(histograms[ch].ravel())
-            features["kurtosis_" + ch] = kurtosis(histograms[ch].ravel())
-            features["entropy_" + ch] = entropy(histograms[ch].ravel())
-            features["min_" + ch] = histograms[ch].ravel().min()
-            features["max_" + ch] = histograms[ch].ravel().max()
+        for pr in proteins:
+            features["mean_" + pr] = histograms[pr].ravel().mean()
+            features["std_" + pr] = histograms[pr].ravel().std()
+            features["skewness_" + pr] = skew(histograms[pr].ravel())
+            features["kurtosis_" + pr] = kurtosis(histograms[pr].ravel())
+            features["entropy_" + pr] = entropy(histograms[pr].ravel())
+            features["min_" + pr] = histograms[pr].ravel().min()
+            features["max_" + pr] = histograms[pr].ravel().max()
             
         return features
 
@@ -97,28 +97,28 @@ class HistogramsDistances(BaseEstimator, TransformerMixin):
         localization = X[0].copy() 
         histograms = X[1].copy()  
 
-        channels = list(histograms.keys())
+        proteins = list(histograms.keys())
         features = dict()
-        for i, ch1 in enumerate(channels):
-            for _, ch2 in enumerate(channels[i+1:]):
-                features["ws_" + ch1 + "_" +  ch2] = wasserstein_distance(  histograms[ch1].ravel(), 
-                                                                            histograms[ch2].ravel())
-                features["js_" + ch1 + "_" +  ch2] = jensenshannon( histograms[ch1].ravel(), 
-                                                                    histograms[ch2].ravel())
-                features["cosine_distance_" + ch1 + "_" +  ch2] = cosine(   histograms[ch1].ravel(), 
-                                                                            histograms[ch2].ravel())
+        for i, pr1 in enumerate(proteins):
+            for _, pr2 in enumerate(proteins[i+1:]):
+                features["ws_" + pr1 + "_" +  pr2] = wasserstein_distance(  histograms[pr1].ravel(), 
+                                                                            histograms[pr2].ravel())
+                features["js_" + pr1 + "_" +  pr2] = jensenshannon( histograms[pr1].ravel(), 
+                                                                    histograms[pr2].ravel())
+                features["cosine_distance_" + pr1 + "_" +  pr2] = cosine(   histograms[pr1].ravel(), 
+                                                                            histograms[pr2].ravel())
 
-                features["mean_" + ch1 + "/mean_" + ch2] =  histograms[ch1].ravel().mean() / \
-                                                            (histograms[ch2].ravel().mean() +  self.eps)
+                features["mean_" + pr1 + "/mean_" + pr2] =  histograms[pr1].ravel().mean() / \
+                                                            (histograms[pr2].ravel().mean() +  self.eps)
                                                         
                                                         
-                hist1_maxvalues = np.array(np.unravel_index(histograms[ch1].argmax(), 
-                                                            histograms[ch1].shape))
+                hist1_maxvalues = np.array(np.unravel_index(histograms[pr1].argmax(), 
+                                                            histograms[pr1].shape))
                 
-                hist2_maxvalues = np.array(np.unravel_index(histograms[ch2].argmax(), 
-                                                            histograms[ch2].shape))
+                hist2_maxvalues = np.array(np.unravel_index(histograms[pr2].argmax(), 
+                                                            histograms[pr2].shape))
                 
-                features["hist_max_" +  ch1 + "_" +  ch2] = np.linalg.norm( hist2_maxvalues-\
+                features["hist_max_" +  pr1 + "_" +  pr2] = np.linalg.norm( hist2_maxvalues-\
                                                                             hist1_maxvalues)
                 
             

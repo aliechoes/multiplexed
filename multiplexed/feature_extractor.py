@@ -6,7 +6,7 @@ class FeatureExtractor(object):
     def __init__(self, feature_unions):
         self.feature_unions = feature_unions
 
-    def extract_(self, localization, grp):
+    def extract_(self, localization):
         features = self.feature_unions.transform(localization).copy()
         features = list_of_dict_to_dict(features)
         return features
@@ -17,7 +17,6 @@ class FeatureExtractor(object):
         for grp in tqdm(groups):
             indx = localization_groups.group == grp
             localization = localization_groups.loc[indx,:].copy()
-            features.append(self.extract_(  localization, 
-                                            grp )) 
+            features.append(self.extract_(  localization)) 
         features = pd.DataFrame(features)
         return features 
