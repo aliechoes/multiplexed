@@ -26,9 +26,9 @@ class HistogramGenerator(BaseEstimator, TransformerMixin):
         ymin, ymax = localization["y"].min(),localization["y"].max()
         zmin, zmax = localization["z"].min(),localization["z"].max()
 
-        assert (xmax - xmin) < 2*self.diameter, "small diameter"
-        assert (ymax - ymin) < 2*self.diameter, "small diameter"
-        assert (zmax - zmin) < 2*self.diameter, "small diameter"
+        assert (xmax - xmin) < 2*self.diameter, print((xmax - xmin), "small diameter")
+        assert (ymax - ymin) < 2*self.diameter, print((ymax - ymin), "small diameter")
+        assert (zmax - zmin) < 2*self.diameter, print((zmax - zmin), "small diameter")
 
         center_x = (xmax + xmin)/2.
         center_y = (ymax + ymin)/2.
