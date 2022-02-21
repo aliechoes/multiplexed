@@ -14,7 +14,7 @@ def get_cluster_features(localization_group,
     
     main_clusters = value_counts.argmax()
     
-    min_samples = cluster_info[min_samples]
+    min_samples = cluster_info["min_samples"][0]
 
     if min_samples <= value_counts.max():
     
@@ -49,7 +49,7 @@ def get_cluster_features(localization_group,
     ## calculating volume
     volume = np.power( (std_x + std_y + (std_z)) / 3 * 2, 3 ) * np.pi * 4 / 3
     
-    ch = cluster_info["Proteins"]
+    ch = cluster_info["Proteins"][0]
     features = dict()
     features["cluster_size_" + ch] = len(localization_group_)
     features["com_x_" + ch] = com_x
@@ -86,7 +86,7 @@ class ClusteringGenerator(BaseEstimator, TransformerMixin):
     
     def transform(self,X):
         localization = X[0].copy() 
-        histograms = X[1].copy() 
+        histograms = X[1].copy()  
 
         localization["cluster"] = -1
         cols = ["x","y","z"]
@@ -103,10 +103,11 @@ class ClusteringGenerator(BaseEstimator, TransformerMixin):
                                     'min_samples': [self.default_min_samples]}
             
             indx = localization["channel"] == ch
-            db = DBSCAN(    eps=ch_cluster_info["radius"], 
-                            min_samples=ch_cluster_info["min_density"])
-            db.fit(localization.loc[indx,cols].to_numpy())
-            localization.loc[indx,"channel"] = db.labels_  
+            db = DBSCAN(    eps=ch_cluster_info["radius"][0], 
+                            min_samples=ch_cluster_info["min_density"][0])
+            
+            db.fit(localization.loc[indx,cols].astype(float).to_numpy())
+            localization.loc[indx,"cluster"] = db.labels_  
 
         return [localization, histograms]
 
@@ -152,20 +153,22 @@ class ClusteringFeatures(BaseEstimator, TransformerMixin):
             features.update(features_ch)
             
         for i, ch1 in enumerate(channles):
-            for j, ch2 in enumerate(channles)[i+1:]:
+            for _, ch2 in enumerate(channles[i+1:]):
                 com_ch1 = [ features["com_x_" + ch1],
                             features["com_y_" + ch1],
                             features["com_z_" + ch1]]  
-
+                com_ch1 = np.array(com_ch1)
+                
                 com_ch2 = [ features["com_x_" + ch2],
                             features["com_y_" + ch2],
-                            features["com_z_" + ch2]]  
-
+                            features["com_z_" + ch2]]   
+                com_ch2 = np.array(com_ch2)
+    
                 features["com_distance_" + ch1 + "_" + ch2] = np.linalg.norm(com_ch2-com_ch1)
                 
                 cluster_size_ch1 = features["cluster_size_" + ch1]
                 cluster_size_ch2 = features["cluster_size_" + ch2]
                 features["cluster_size_" + ch1 + "/cluster_size_" + ch2] = \
-                                                cluster_size_ch1 / (cluster_size_ch2 +  eps)
+                                                cluster_size_ch1 / (cluster_size_ch2 +  self.eps)
 
         return features

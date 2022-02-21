@@ -1,6 +1,4 @@
 import pandas as pd
-import h5py
-from joblib import Parallel, delayed
 from tqdm import tqdm
 from multiplexed.utils import list_of_dict_to_dict
 
@@ -9,15 +7,11 @@ class FeatureExtractor(object):
         self.feature_unions = feature_unions
 
     def extract_(self, localization, grp):
-        try: 
-            features = self.feature_unions.transform(localization).copy()
-            features = list_of_dict_to_dict(features)
-        except:
-            print("corrupted group", grp)
-            features = []
+        features = self.feature_unions.transform(localization).copy()
+        features = list_of_dict_to_dict(features)
         return features
 
-    def extract_features(self, localization_groups, n_jobs = -1):
+    def extract_features(self, localization_groups):
         groups = localization_groups.group.unique()
         features = []
         for grp in tqdm(groups):
@@ -25,4 +19,5 @@ class FeatureExtractor(object):
             localization = localization_groups.loc[indx,:].copy()
             features.append(self.extract_(  localization, 
                                             grp )) 
+        features = pd.DataFrame(features)
         return features 

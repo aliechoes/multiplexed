@@ -12,7 +12,7 @@ class HistogramGenerator(BaseEstimator, TransformerMixin):
     """
     mask based features
     """
-    def __init__(self, diameter = 7, bins = 20):
+    def __init__(self, diameter = 10, bins = 20):
         self.diameter = diameter
         self.bins = bins
     
@@ -45,7 +45,7 @@ class HistogramGenerator(BaseEstimator, TransformerMixin):
         histograms = dict()
         for i, ch in  enumerate(localization["channel"].unique()):
             indx = localization["channel"] == ch 
-            hist, _ = np.histogramdd(  localization[indx,cols].to_numpy(), 
+            hist, _ = np.histogramdd(  localization.loc[indx,cols].to_numpy(), 
                                             bins = self.bins,
                                             range = ((-1,1),(-1,1),(-1,1)) )
             
@@ -68,10 +68,10 @@ class HistogramsStatistics(BaseEstimator, TransformerMixin):
         localization = X[0].copy() 
         histograms = X[1].copy() 
 
-        channles = localization["channel"].unique()
+        channels = localization["channel"].unique()
         
         features = dict()
-        for ch in channles:
+        for ch in channels:
             features["mean_" + ch] = histograms[ch].ravel().mean()
             features["std_" + ch] = histograms[ch].ravel().std()
             features["skewness_" + ch] = skew(histograms[ch].ravel())
@@ -95,28 +95,29 @@ class HistogramsDistances(BaseEstimator, TransformerMixin):
     
     def transform(self,X):
         localization = X[0].copy() 
-        histograms = X[1].copy() 
+        histograms = X[1].copy()  
 
-        channles = localization["channel"].unique()
-        
+        channels = list(histograms.keys())
         features = dict()
-        for i, ch1 in enumerate(channles):
-            for j, ch2 in enumerate(channles)[i+1:]:
-                features["ws_" + ch1 + "_" +  ch2] = wasserstein_distance(  histograms[ch1], 
-                                                                            histograms[ch1])
-                features["js_" + ch1 + "_" +  ch2] = jensenshannon( histograms[ch1], 
-                                                                    histograms[ch2])
-                features["cosine_distance_" + ch1 + "_" +  ch2] = cosine(   histograms[ch1], 
-                                                                            histograms[ch2])
+        for i, ch1 in enumerate(channels):
+            for _, ch2 in enumerate(channels[i+1:]):
+                features["ws_" + ch1 + "_" +  ch2] = wasserstein_distance(  histograms[ch1].ravel(), 
+                                                                            histograms[ch2].ravel())
+                features["js_" + ch1 + "_" +  ch2] = jensenshannon( histograms[ch1].ravel(), 
+                                                                    histograms[ch2].ravel())
+                features["cosine_distance_" + ch1 + "_" +  ch2] = cosine(   histograms[ch1].ravel(), 
+                                                                            histograms[ch2].ravel())
 
                 features["mean_" + ch1 + "/mean_" + ch2] =  histograms[ch1].ravel().mean() / \
-                                                            (histograms[ch2].ravel().mean() +  eps)
+                                                            (histograms[ch2].ravel().mean() +  self.eps)
                                                         
                                                         
                 hist1_maxvalues = np.array(np.unravel_index(histograms[ch1].argmax(), 
                                                             histograms[ch1].shape))
+                
                 hist2_maxvalues = np.array(np.unravel_index(histograms[ch2].argmax(), 
                                                             histograms[ch2].shape))
+                
                 features["hist_max_" +  ch1 + "_" +  ch2] = np.linalg.norm( hist2_maxvalues-\
                                                                             hist1_maxvalues)
                 
