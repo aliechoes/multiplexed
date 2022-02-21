@@ -35,53 +35,25 @@ def list_of_dict_to_dict(list_of_dicts):
 #     return results
 
     
-# def metadata_generator(data_dir,sample_size=None ,n_jobs=-1):
-    
-#     metadata_columns = ["file",
-#                         "experiment",
-#                         "donor", 
-#                         "condition",
-#                         "object_number",
-#                         "set",
-#                         "label"]
-#     metadata = pd.DataFrame(columns=metadata_columns)
-    
-#     experiments_list = sorted(os.listdir(data_dir))
-#     print("Metadata prepration starts...")
-#     for exp in experiments_list:
-#         experiments_path = os.path.join(data_dir, exp)
-#         donors_list = sorted(os.listdir(experiments_path))
-#         for donor in donors_list:
-#             donors_path = os.path.join(data_dir, exp, donor)
-#             conditions_list = sorted(os.listdir(donors_path))
-#             for cond in conditions_list:
-#                 print(exp, donor, cond)
-#                 conditions_path = os.path.join(data_dir, exp, donor, cond + "/*.h5" )
-#                 files = glob.glob(conditions_path)
-                
-#                 if sample_size:
-#                     files = random.choices(files, k=min(sample_size, len(files)) )
-                
-#                 metadata_temp = pd.DataFrame(columns=metadata_columns)
-#                 metadata_temp["file"] = files
-#                 metadata_temp["experiment"] = exp
-#                 metadata_temp["donor"] = donor
-#                 metadata_temp["condition"] = cond
-
-#                 index_list = metadata_temp.file.tolist()
-                
-#                 ## data parallelism
-#                 results = Parallel(n_jobs=n_jobs)(delayed(get_label)(f) \
-#                             for f in tqdm(index_list, position=0, leave=True) )
-#                 results = pd.DataFrame(results)
-                
-#                 if results.shape[0] > 0:
-#                     metadata_temp["label"] = results["label"]
-#                     metadata_temp["set"] = results["set"]
-#                     metadata_temp["object_number"] = results["object_number"]
-
-#                     metadata = metadata.append(metadata_temp, ignore_index = True)
-#                 results = None
-#                 metadata_temp = None
-#     print("...metadata prepration ended.")
-#     return metadata
+def metadata_generator(datasets):
+    metadata = pd.DataFrame(columns=[   "dataset",
+                                        "group",
+                                        "label",
+                                        "cluster"])
+    for ds in tqdm(datasets):
+        files = glob.glob(datasets[ds]+"*.hdf5")
+        groups = set([])
+        for f in files:
+            temp = h5py.File(f, "r")
+            temp = temp.get("locs")[()]
+            temp_group = pd.DataFrame(temp)["group"]
+            temp_group = set(temp_group.unique())
+            groups = set.union(groups, temp_group )
+        for gr in groups:
+            metadata = metadata.append({
+                "dataset" : ds,
+                "group"   : gr,
+                "label"   : -1,
+                "cluster"   : -1,
+            }, ignore_index=True)
+    return metadata
