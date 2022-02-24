@@ -85,8 +85,7 @@ class ClusteringGenerator(BaseEstimator, TransformerMixin):
         return self
     
     def transform(self,X):
-        localization = X[0].copy() 
-        histograms = X[1].copy()  
+        localization = X.copy() 
 
         localization["cluster"] = -1
         cols = ["x","y","z"]
@@ -109,7 +108,7 @@ class ClusteringGenerator(BaseEstimator, TransformerMixin):
             db.fit(localization.loc[indx,cols].astype(float).to_numpy())
             localization.loc[indx,"cluster"] = db.labels_  
 
-        return [localization, histograms]
+        return localization
 
 
 class ClusteringFeatures(BaseEstimator, TransformerMixin):
