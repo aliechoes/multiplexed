@@ -84,6 +84,42 @@ def get_cluster_features(localization_group,
     return features
 
 
+def find_protein_center_of_mass(localization_group, 
+                        pr_cluster_info):
+    
+    pr = pr_cluster_info["proteins"][0]
+    indx = localization_group.protein == pr
+    clustering_group1 = get_cluster_features(localization_group.loc[indx,:], 
+                                             pr_cluster_info )
+    pr_com = [  clustering_group1["com_x_" + pr],
+                clustering_group1["com_y_" + pr],
+                clustering_group1["com_z_" + pr]]
+    pr_com = np.array(pr_com)
+        
+    return pr_com
+
+
+def find_distance_from_overal_com( localization_group, 
+                            pr_cluster_info,
+                            pr1_com, 
+                            pr2_com):
+    
+    ## finding the com of the proteins
+    pr = pr_cluster_info["proteins"][0]
+    pr_com  = find_protein_center_of_mass(localization_group,  
+                                          pr_cluster_info)
+    
+    overal_com = (pr1_com + pr2_com)/2.
+       
+    dist1 = np.linalg.norm(pr1_com-pr_com)
+    dist2 = np.linalg.norm(pr2_com-pr_com)
+    
+    if dist1 < dist2:
+        dist = -1*np.linalg.norm(overal_com-pr_com)
+    else: 
+        dist = np.linalg.norm(overal_com-pr_com)  
+    
+    return dist
     
 
 class ClusteringGenerator(BaseEstimator, TransformerMixin):
