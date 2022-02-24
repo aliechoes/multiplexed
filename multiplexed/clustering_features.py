@@ -5,6 +5,25 @@ import pandas as pd
 from sklearn.base import BaseEstimator
 from sklearn.base import TransformerMixin
 
+
+def get_pr_cluster_info(cluster_info, 
+                        pr,
+                        default_radius,
+                        default_min_density,
+                        default_min_samples):
+    
+    if pr in cluster_info.proteins.tolist():
+        pr_indx = cluster_info.proteins == pr
+        pr_cluster_info = cluster_info.loc[pr_indx,:].to_dict('list')
+    else:
+        pr_cluster_info = { 'proteins': [pr],
+                            'radius': [default_radius],
+                            'min_density': [default_min_density],
+                            'min_samples': [default_min_samples]}
+    return pr_cluster_info
+
+
+
 def get_cluster_features(localization_group, 
                          cluster_info ):
     
@@ -92,14 +111,11 @@ class ClusteringGenerator(BaseEstimator, TransformerMixin):
         proteins = localization["protein"].unique()
 
         for pr in proteins:
-            if pr in self.cluster_info.proteins.tolist():
-                pr_indx = self.cluster_info.proteins == pr
-                pr_cluster_info = self.cluster_info.loc[pr_indx,:].to_dict('list')
-            else:
-                pr_cluster_info = { 'proteins': [pr],
-                                    'radius': [self.default_radius],
-                                    'min_density': [self.default_min_density],
-                                    'min_samples': [self.default_min_samples]}
+            pr_cluster_info =get_pr_cluster_info(   self.cluster_info, 
+                                                    pr,
+                                                    self.default_radius,
+                                                    self.default_min_density,
+                                                    self.default_min_samples)
             
             indx = localization["protein"] == pr
             db = DBSCAN(    eps=pr_cluster_info["radius"][0], 
@@ -137,14 +153,11 @@ class ClusteringFeatures(BaseEstimator, TransformerMixin):
 
         features = dict()
         for pr in proteins:
-            if pr in self.cluster_info.proteins.tolist():
-                pr_indx = self.cluster_info.proteins == pr
-                pr_cluster_info = self.cluster_info.loc[pr_indx,:].to_dict('list')
-            else:
-                pr_cluster_info = { 'proteins': [pr],
-                                    'radius': [self.default_radius],
-                                    'min_density': [self.default_min_density],
-                                    'min_samples': [self.default_min_samples]}
+            pr_cluster_info =get_pr_cluster_info(   self.cluster_info, 
+                                                    pr,
+                                                    self.default_radius,
+                                                    self.default_min_density,
+                                                    self.default_min_samples)
             
             indx = localization["protein"] == pr
             features_pr = get_cluster_features(localization.loc[indx,:], 
@@ -170,4 +183,67 @@ class ClusteringFeatures(BaseEstimator, TransformerMixin):
                 features["cluster_size_" + pr1 + "/cluster_size_" + pr2] = \
                                                 cluster_size_pr1 / (cluster_size_pr2 +  self.eps)
 
+        return features
+
+
+
+class DistanceToCOMFeatures(BaseEstimator, TransformerMixin):
+    """
+    mask based features
+    """
+    def __init__(   self, 
+                    path_to_clustering_info, 
+                    pr1,
+                    pr2,
+                    default_radius = 0.6, 
+                    default_min_density = 5, 
+                    default_min_samples = 400,
+                    eps = 1e-16):
+        self.pr1 = pr1
+        self.pr2 = pr2
+        self.cluster_info = pd.read_csv(path_to_clustering_info)
+        self.default_radius = default_radius
+        self.default_min_density = default_min_density
+        self.default_min_samples = default_min_samples
+        self.eps = eps
+    
+    def fit(self, X = None, y = None):        
+        return self
+    
+    def transform(self,X):
+        localization_group = X[0].copy()
+        
+        pr1_cluster_info = get_pr_cluster_info(self.cluster_info, 
+                                               self.pr1,
+                                               self.default_radius,
+                                               self.default_min_density,
+                                               self.default_min_samples)
+        
+        pr1_com  = find_protein_center_of_mass(localization_group,  
+                                               pr1_cluster_info)
+        
+        pr2_cluster_info = get_pr_cluster_info(self.cluster_info, 
+                                               self.pr2,
+                                               self.default_radius,
+                                               self.default_min_density,
+                                               self.default_min_samples)
+        
+        pr2_com  = find_protein_center_of_mass(localization_group,  
+                                               pr2_cluster_info)
+        
+        proteins = localization_group["protein"].unique()
+
+        features = dict()
+        for pr in proteins:
+            pr_cluster_info = get_pr_cluster_info(self.cluster_info, 
+                                               pr,
+                                               self.default_radius,
+                                               self.default_min_density,
+                                               self.default_min_samples)
+            dist = find_distance_from_overal_com( localization_group, 
+                                                                pr_cluster_info,
+                                                                pr1_com, 
+                                                                pr2_com)
+            features["distance_of_" + pr + "_from_" + self.pr1 + "&" + self.pr2 ] = dist
+         
         return features
