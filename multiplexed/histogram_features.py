@@ -87,13 +87,13 @@ class HistogramsStatistics(BaseEstimator, TransformerMixin):
         
         features = dict()
         for pr in proteins:
-            features["HS_mean_" + pr] = histograms[pr].ravel().mean() # intensities
-            features["HS_std_" + pr] = histograms[pr].ravel().std() # intensities
-            features["HS_skewness_" + pr] = skew(histograms[pr].ravel()) # intensities
-            features["HS_kurtosis_" + pr] = kurtosis(histograms[pr].ravel()) # intensities
-            features["HS_entropy_" + pr] = entropy(histograms[pr].ravel()) # intensities
-            features["HS_min_" + pr] = histograms[pr].ravel().min() # intensities
-            features["HS_max_" + pr] = histograms[pr].ravel().max() # intensities
+            features["HF_mean_" + pr] = histograms[pr].ravel().mean() # intensities
+            features["HF_std_" + pr] = histograms[pr].ravel().std() # intensities
+            features["HF_skewness_" + pr] = skew(histograms[pr].ravel()) # intensities
+            features["HF_kurtosis_" + pr] = kurtosis(histograms[pr].ravel()) # intensities
+            features["HF_entropy_" + pr] = entropy(histograms[pr].ravel()) # intensities
+            features["HF_min_" + pr] = histograms[pr].ravel().min() # intensities
+            features["HF_max_" + pr] = histograms[pr].ravel().max() # intensities
             
         return features
 
