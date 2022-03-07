@@ -91,9 +91,9 @@ def find_protein_center_of_mass(localization_group,
     indx = localization_group.protein == pr
     clustering_group1 = get_cluster_features(localization_group.loc[indx,:], 
                                              pr_cluster_info )
-    pr_com = [  clustering_group1["com_x_" + pr],
-                clustering_group1["com_y_" + pr],
-                clustering_group1["com_z_" + pr]]
+    pr_com = [  clustering_group1["CF_com_x_" + pr],
+                clustering_group1["CF_com_y_" + pr],
+                clustering_group1["CF_com_z_" + pr]]
     pr_com = np.array(pr_com)
         
     return pr_com
@@ -202,14 +202,14 @@ class ClusteringFeatures(BaseEstimator, TransformerMixin):
             
         for i, pr1 in enumerate(proteins):
             for _, pr2 in enumerate(proteins[i+1:]):
-                com_pr1 = [ features["com_x_" + pr1],
-                            features["com_y_" + pr1],
-                            features["com_z_" + pr1]]  
+                com_pr1 = [ features["CF_com_x_" + pr1],
+                            features["CF_com_y_" + pr1],
+                            features["CF_com_z_" + pr1]]  
                 com_pr1 = np.array(com_pr1)
                 
-                com_pr2 = [ features["com_x_" + pr2],
-                            features["com_y_" + pr2],
-                            features["com_z_" + pr2]]   
+                com_pr2 = [ features["CF_com_x_" + pr2],
+                            features["CF_com_y_" + pr2],
+                            features["CF_com_z_" + pr2]]   
                 com_pr2 = np.array(com_pr2)
     
                 features["CF_com_distance_" + pr1 + "_" + pr2] = np.linalg.norm(com_pr2-com_pr1)
