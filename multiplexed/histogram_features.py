@@ -87,13 +87,13 @@ class HistogramsStatistics(BaseEstimator, TransformerMixin):
         
         features = dict()
         for pr in proteins:
-            features["mean_" + pr] = histograms[pr].ravel().mean() # intensities
-            features["std_" + pr] = histograms[pr].ravel().std() # intensities
-            features["skewness_" + pr] = skew(histograms[pr].ravel()) # intensities
-            features["kurtosis_" + pr] = kurtosis(histograms[pr].ravel()) # intensities
-            features["entropy_" + pr] = entropy(histograms[pr].ravel()) # intensities
-            features["min_" + pr] = histograms[pr].ravel().min() # intensities
-            features["max_" + pr] = histograms[pr].ravel().max() # intensities
+            features["HS_mean_" + pr] = histograms[pr].ravel().mean() # intensities
+            features["HS_std_" + pr] = histograms[pr].ravel().std() # intensities
+            features["HS_skewness_" + pr] = skew(histograms[pr].ravel()) # intensities
+            features["HS_kurtosis_" + pr] = kurtosis(histograms[pr].ravel()) # intensities
+            features["HS_entropy_" + pr] = entropy(histograms[pr].ravel()) # intensities
+            features["HS_min_" + pr] = histograms[pr].ravel().min() # intensities
+            features["HS_max_" + pr] = histograms[pr].ravel().max() # intensities
             
         return features
 
@@ -116,14 +116,14 @@ class HistogramsDistances(BaseEstimator, TransformerMixin):
         features = dict()
         for i, pr1 in enumerate(proteins):
             for _, pr2 in enumerate(proteins[i+1:]):
-                features["ws_" + pr1 + "_" +  pr2] = wasserstein_distance(  histograms[pr1].ravel(), 
+                features["HD_ws_" + pr1 + "_" +  pr2] = wasserstein_distance(  histograms[pr1].ravel(), 
                                                                             histograms[pr2].ravel())
-                features["js_" + pr1 + "_" +  pr2] = jensenshannon( histograms[pr1].ravel(), 
+                features["HD_js_" + pr1 + "_" +  pr2] = jensenshannon( histograms[pr1].ravel(), 
                                                                     histograms[pr2].ravel())
-                features["cosine_distance_" + pr1 + "_" +  pr2] = cosine(   histograms[pr1].ravel(), 
+                features["HD_cosine_distance_" + pr1 + "_" +  pr2] = cosine(   histograms[pr1].ravel(), 
                                                                             histograms[pr2].ravel())
 
-                features["mean_" + pr1 + "/mean_" + pr2] =  histograms[pr1].ravel().mean() / \
+                features["HD_mean_" + pr1 + "/mean_" + pr2] =  histograms[pr1].ravel().mean() / \
                                                             (histograms[pr2].ravel().mean() +  self.eps)
                                                         
                                                         
@@ -133,7 +133,7 @@ class HistogramsDistances(BaseEstimator, TransformerMixin):
                 hist2_maxvalues = np.array(np.unravel_index(histograms[pr2].argmax(), 
                                                             histograms[pr2].shape))
                 
-                features["hist_max_" +  pr1 + "_" +  pr2] = np.linalg.norm( hist2_maxvalues-\
+                features["HD_hist_max_" +  pr1 + "_" +  pr2] = np.linalg.norm( hist2_maxvalues-\
                                                                             hist1_maxvalues)
                 
             

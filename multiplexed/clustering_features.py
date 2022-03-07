@@ -70,17 +70,17 @@ def get_cluster_features(localization_group,
     
     pr = cluster_info["proteins"][0]
     features = dict()
-    features["cluster_size_" + pr] = len(localization_group_)
-    features["com_x_" + pr] = com_x
-    features["com_y_" + pr] = com_y
-    features["com_z_" + pr] = com_z
+    features["CF_cluster_size_" + pr] = len(localization_group_)
+    features["CF_com_x_" + pr] = com_x
+    features["CF_com_y_" + pr] = com_y
+    features["CF_com_z_" + pr] = com_z
 
-    features["std_x_" + pr] = std_x
-    features["std_y_" + pr] = std_y
-    features["std_z_" + pr] = std_z
+    features["CF_std_x_" + pr] = std_x
+    features["CF_std_y_" + pr] = std_y
+    features["CF_std_z_" + pr] = std_z
     
-    features["volume_" + pr] = volume
-    features["convex_hull_" + pr] = convex_hull
+    features["CF_volume_" + pr] = volume
+    features["CF_convex_hull_" + pr] = convex_hull
     return features
 
 
@@ -212,11 +212,11 @@ class ClusteringFeatures(BaseEstimator, TransformerMixin):
                             features["com_z_" + pr2]]   
                 com_pr2 = np.array(com_pr2)
     
-                features["com_distance_" + pr1 + "_" + pr2] = np.linalg.norm(com_pr2-com_pr1)
+                features["CF_com_distance_" + pr1 + "_" + pr2] = np.linalg.norm(com_pr2-com_pr1)
                 
-                cluster_size_pr1 = features["cluster_size_" + pr1]
-                cluster_size_pr2 = features["cluster_size_" + pr2]
-                features["cluster_size_" + pr1 + "/cluster_size_" + pr2] = \
+                cluster_size_pr1 = features["CF_cluster_size_" + pr1]
+                cluster_size_pr2 = features["CF_cluster_size_" + pr2]
+                features["CF_cluster_size_" + pr1 + "/cluster_size_" + pr2] = \
                                                 cluster_size_pr1 / (cluster_size_pr2 +  self.eps)
 
         return features
@@ -280,6 +280,6 @@ class DistanceToCOMFeatures(BaseEstimator, TransformerMixin):
                                                                 pr_cluster_info,
                                                                 pr1_com, 
                                                                 pr2_com)
-            features["distance_of_" + pr + "_from_" + self.pr1 + "&" + self.pr2 ] = dist
+            features["CD_distance_of_" + pr + "_from_" + self.pr1 + "&" + self.pr2 ] = dist
          
         return features
