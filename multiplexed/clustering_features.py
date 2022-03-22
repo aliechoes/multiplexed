@@ -30,13 +30,17 @@ def get_cluster_features(localization_group,
     localization_group_ = localization_group.copy()
     ## finding biggest clusters and filter them
     value_counts = localization_group_.cluster.value_counts()
-    
-    main_clusters = value_counts.argmax()
+    try:
+        biggest_cluster_size = value_counts.max()
+    except ValueError:
+        biggest_cluster_size = 0
     
     min_samples = cluster_info["min_samples"][0]
 
-    if min_samples <= value_counts.max():
-    
+    if min_samples <= biggest_cluster_size:
+        main_clusters = value_counts == biggest_cluster_size
+        main_clusters = main_clusters[main_clusters].index.tolist()
+        
         indx = localization_group_.cluster.isin([main_clusters])
         localization_group_ = localization_group_.copy().loc[indx,:]
 
