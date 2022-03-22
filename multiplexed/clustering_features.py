@@ -38,14 +38,11 @@ def get_cluster_features(localization_group,
     min_samples = cluster_info["min_samples"][0]
 
     if min_samples <= biggest_cluster_size:
-        print("min_samples", min_samples)
-        print("biggest_cluster_size", biggest_cluster_size)
         main_clusters = value_counts == biggest_cluster_size
         main_clusters = main_clusters[main_clusters].index.tolist()
         
-        indx = localization_group_.cluster.isin([main_clusters])
+        indx = localization_group_.cluster.isin(main_clusters)
         localization_group_ = localization_group_.copy().loc[indx,:]
-        print(localization_group_.describe())
 
         ## calculating the Center of Mass
         com_x = localization_group_.x.mean()
