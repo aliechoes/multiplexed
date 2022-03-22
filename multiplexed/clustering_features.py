@@ -45,6 +45,7 @@ def get_cluster_features(localization_group,
         
         indx = localization_group_.cluster.isin([main_clusters])
         localization_group_ = localization_group_.copy().loc[indx,:]
+        print(localization_group_.describe())
 
         ## calculating the Center of Mass
         com_x = localization_group_.x.mean()
