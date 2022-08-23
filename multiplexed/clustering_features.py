@@ -8,13 +8,19 @@ from sklearn.base import TransformerMixin
 
 def get_pr_cluster_info(cluster_info, 
                         pr,
+                        ds,
                         default_radius,
                         default_min_density,
                         default_min_samples):
     
-    if pr in cluster_info.proteins.tolist():
+    ds_indx = cluster_info.dataset == ds
+    if pr in cluster_info.loc[ds_indx,"proteins"].tolist():
         pr_indx = cluster_info.proteins == pr
-        pr_cluster_info = cluster_info.loc[pr_indx,:].to_dict('list')
+        pr_cluster_info = cluster_info.loc[pr_indx & ds_indx,:].to_dict('list')
+    elif "Rest" in cluster_info.loc[ds_indx,"proteins"].tolist():
+        pr_indx = cluster_info.proteins == "Rest"
+        pr_cluster_info = cluster_info.loc[pr_indx & ds_indx,:].to_dict('list')
+        pr_cluster_info['proteins'] = [pr]
     else:
         pr_cluster_info = { 'proteins': [pr],
                             'radius': [default_radius],
@@ -28,8 +34,12 @@ def get_cluster_features(localization_group,
                          cluster_info ):
     
     localization_group_ = localization_group.copy()
+    num_localization = len(localization_group_)
+    
     ## finding biggest clusters and filter them
-    value_counts = localization_group_.cluster.value_counts()
+
+    cluster_index = localization_group_.cluster != -1 # filtering out outliers from DBSCAN
+    value_counts = localization_group_.loc[cluster_index,"cluster"].value_counts()
     try:
         biggest_cluster_size = value_counts.max()
     except ValueError:
@@ -56,6 +66,7 @@ def get_cluster_features(localization_group,
         
         ## calculating convex hull
         convex_hull = ConvexHull(localization_group_.loc[:,["x","y","z"]].to_numpy()).volume
+        cluster_size = biggest_cluster_size
         
     else:
         ## calculating the Center of Mass
@@ -68,13 +79,14 @@ def get_cluster_features(localization_group,
         std_y = 0.
         std_z = 0.
         convex_hull = 0
-
-    ## calculating volume
-    volume = np.power( (std_x + std_y + (std_z)) / 3 * 2, 3 ) * np.pi * 4 / 3
+        cluster_size = 0
     
     pr = cluster_info["proteins"][0]
+
     features = dict()
-    features["CF_cluster_size_" + pr] = len(localization_group_)
+
+    features["CF_num_localization_" + pr] = num_localization  
+    features["CF_cluster_size_" + pr] = cluster_size  
     features["CF_com_x_" + pr] = com_x
     features["CF_com_y_" + pr] = com_y
     features["CF_com_z_" + pr] = com_z
@@ -83,7 +95,6 @@ def get_cluster_features(localization_group,
     features["CF_std_y_" + pr] = std_y
     features["CF_std_z_" + pr] = std_z
     
-    features["CF_volume_" + pr] = volume
     features["CF_convex_hull_" + pr] = convex_hull
     return features
 
@@ -150,19 +161,32 @@ class ClusteringGenerator(BaseEstimator, TransformerMixin):
         cols = ["x","y","z"]
         proteins = localization["protein"].unique()
 
+        ds = localization["dataset"].unique()
+
+        assert len(ds) == 1
+        ds = ds[0]
+
         for pr in proteins:
             pr_cluster_info =get_pr_cluster_info(   self.cluster_info, 
                                                     pr,
+                                                    ds,
                                                     self.default_radius,
                                                     self.default_min_density,
                                                     self.default_min_samples)
             
             indx = localization["protein"] == pr
-            db = DBSCAN(    eps=pr_cluster_info["radius"][0], 
+            dbscan = DBSCAN(    eps=pr_cluster_info["radius"][0], 
                             min_samples=pr_cluster_info["min_density"][0])
             
-            db.fit(localization.loc[indx,cols].astype(float).to_numpy())
-            localization.loc[indx,"cluster"] = db.labels_  
+            dbscan.fit(localization.loc[indx,cols].astype(float).to_numpy())
+
+            num_clusters = dbscan.labels_.max() + 1
+            
+            for cl in range(num_clusters):
+                if (dbscan.labels_ == cl).sum() < pr_cluster_info["min_samples"][0]:
+                    dbscan.labels_[dbscan.labels_ == cl] = -1
+                
+            localization.loc[indx,"cluster"] =  dbscan.labels_
 
         return localization
 
@@ -191,10 +215,15 @@ class ClusteringFeatures(BaseEstimator, TransformerMixin):
         
         proteins = localization["protein"].unique()
 
+        ds = localization["dataset"].unique()
+        assert len(ds) == 1
+        ds = ds[0]
+
         features = dict()
         for pr in proteins:
             pr_cluster_info =get_pr_cluster_info(   self.cluster_info, 
                                                     pr,
+                                                    ds,
                                                     self.default_radius,
                                                     self.default_min_density,
                                                     self.default_min_samples)
@@ -251,10 +280,15 @@ class DistanceToCOMFeatures(BaseEstimator, TransformerMixin):
         return self
     
     def transform(self,X):
-        localization_group = X[0].copy()
+        localization_group = X[0].copy()        
+        
+        ds = localization_group["dataset"].unique()
+        assert len(ds) == 1
+        ds = ds[0]
         
         pr1_cluster_info = get_pr_cluster_info(self.cluster_info, 
                                                self.pr1,
+                                               ds,
                                                self.default_radius,
                                                self.default_min_density,
                                                self.default_min_samples)
@@ -264,6 +298,7 @@ class DistanceToCOMFeatures(BaseEstimator, TransformerMixin):
         
         pr2_cluster_info = get_pr_cluster_info(self.cluster_info, 
                                                self.pr2,
+                                               ds,
                                                self.default_radius,
                                                self.default_min_density,
                                                self.default_min_samples)
@@ -277,6 +312,7 @@ class DistanceToCOMFeatures(BaseEstimator, TransformerMixin):
         for pr in proteins:
             pr_cluster_info = get_pr_cluster_info(self.cluster_info, 
                                                pr,
+                                               ds,
                                                self.default_radius,
                                                self.default_min_density,
                                                self.default_min_samples)
