@@ -49,18 +49,18 @@ class HistogramGenerator(BaseEstimator, TransformerMixin):
         center_y = (ymax + ymin)/2.
         center_z = (zmax + zmin)/2.
 
-        cols = ["x","y","z"]
-        localization[cols] = localization[cols].subtract([  center_x,
+        cols_ = ["x","y","z"]
+        localization[cols_] = localization[cols_].subtract([  center_x,
                                                             center_y,
                                                             center_z] )
-        localization[cols] = localization[cols].divide([    self.diameter,
+        localization[cols_] = localization[cols_].divide([    self.diameter,
                                                             self.diameter,
                                                             self.diameter])
 
         histograms = dict()
-        for i, pr in  enumerate(localization["protein"].unique()):
+        for _ , pr in  enumerate(localization["protein"].unique()):
             indx = localization["protein"] == pr 
-            hist, _ = np.histogramdd(  localization.loc[indx,cols].to_numpy(), 
+            hist, _ = np.histogramdd(  localization.loc[indx,cols_].to_numpy(), 
                                             bins = self.bins,
                                             range = ((-1,1),(-1,1),(-1,1)) )
             
@@ -86,6 +86,9 @@ class HistogramsStatistics(BaseEstimator, TransformerMixin):
         proteins = localization["protein"].unique()
         
         features = dict()
+        features["HF_diameter_x"] = localization.x.max() -  localization.x.min()
+        features["HF_diameter_y"] = localization.y.max() -  localization.y.min()
+        features["HF_diameter_z"] = localization.z.max() -  localization.z.min()
         for pr in proteins:
             features["HF_mean_" + pr] = histograms[pr].ravel().mean() # intensities
             features["HF_std_" + pr] = histograms[pr].ravel().std() # intensities
@@ -138,3 +141,4 @@ class HistogramsDistances(BaseEstimator, TransformerMixin):
                 
             
         return features
+
