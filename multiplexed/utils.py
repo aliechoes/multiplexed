@@ -16,7 +16,7 @@ def list_of_dict_to_dict(list_of_dicts):
 
 
 # def get_label(h5_file_path):
-#     h5_file = h5py.File(h5_file_path, "r")  
+#     h5_file = h5py.File(h5_file_path, "r")
 #     ## label
 #     results = dict()
 #     try:
@@ -34,7 +34,7 @@ def list_of_dict_to_dict(list_of_dicts):
 #     h5_file.close()
 #     return results
 
-    
+
 def metadata_generator(datasets):
     metadata = pd.DataFrame(columns=[   "dataset",
                                         "group",

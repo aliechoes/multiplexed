@@ -11,17 +11,17 @@ class FeatureExtractor(object):
         features = list_of_dict_to_dict(features)
         return features
 
-    def extract_features(self, metadata, localizations): 
-        
+    def extract_features(self, metadata, localizations):
+
         features = []
-        for i in tqdm(range(metadata.shape[0])): 
+        for i in tqdm(range(metadata.shape[0])):
             ds = metadata.loc[i, "dataset"]
             grp = metadata.loc[i, "group"]
-            
+
             indx = localizations.dataset == ds
             indx = indx & (localizations.group == grp)
-            
+
             localization_group = localizations.loc[indx,:].copy()
-            features.append(self.extract_(localization_group)) 
+            features.append(self.extract_(localization_group))
         features = pd.DataFrame(features)
-        return features 
+        return features
